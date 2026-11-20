@@ -1,0 +1,15 @@
+# downloaded weights (see README: Setup)
+models/
+lenses/
+
+# environments and caches
+.venv/
+__pycache__/
+*.pyc
+.ipynb_checkpoints/
+
+# partial outputs written by run_flip.py while it runs (merged into one file at the end)
+*_parts/
+
+# unpacked dataset (the repo keeps the .csv.gz)
+data/*.csv
