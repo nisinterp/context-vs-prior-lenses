@@ -1,0 +1,17 @@
+- **Same data, two sizes:** both models saw the same 605 facts × 19 variants. The 4B model knows more of the facts (65.6% vs 58.8% of rows have a known prior). It follows the context slightly less often (63.0% vs 66.6% of known-fact rows).
+- **The turn sits at the same relative depth.** The context-won and prior-won curves split at layer 19 of 28 in 1.7B (depth 0.70) and at layer 24 of 36 in 4B (depth 0.69). In both models nothing readable happens before that point (mean |shift| below 0.3 logits). The turn is narrow, about 3 layers. The larger model has more layers in total, but its decision point does not move earlier or later in relative terms.
+- **The decision builds up differently after the turn.**
+  - In 1.7B the J-lens shift rises smoothly and peaks at depth 0.89 (layer 24, 45 logits), then falls back at the last layers.
+  - In 4B there is a first jump at the turn (7 logits at layer 24) and a plateau at layers 25–28. A second, larger rise follows from depth 0.8, reaching its peak at depth 0.97 (layer 34, 40 logits).
+  - So in 4B a larger share of the decision is made in the very last layers.
+- **Prior-won rows are pushed harder in 4B.** At the peak, the assertion moves δ by 11.1 logits in 4B against 6.4 in 1.7B. The bigger model "hears" the assertion as strongly but still keeps its memorised answer more often.
+- **The same types persuade both models.** The ranking of the 19 types by context-won share is highly similar (Spearman ρ = 0.90). Authority, imperative, formal and supposition are on top in both models; belief_reports and weak stance are near the bottom in both.
+- **Where the models differ by type:**
+  - Several types lose much more of their effect in 4B: sarcasm (70.6% → 56.9%), interrogative (61.0% → 49.9%), hearsay (59.9% → 50.8%), informal (64.8% → 56.7%) and weak stance (55.4% → 47.5%).
+  - Counterfactual is the only type that gains a lot (48.4% → 55.6%). Supposition and material_conditional gain a little (+2–3 points).
+  - The larger model is more sensitive to how reliable the assertion sounds.
+- **Layer timing follows behaviour in both models.** Types that win more often diverge earlier and push harder. The correlation of context-won share with the divergence layer is −0.94 in 1.7B and −0.97 in 4B; with the maximum J-lens shift it is +0.97 and +0.94. In relative depth the per-type divergence layers sit in the same narrow band in both models (0.72–0.78).
+- **Caveats:**
+  - Only 4 of 15 relations are used, and there are only two model sizes.
+  - δ uses the first answer token only.
+  - The J-lens matrices for the two models were fitted separately (on wikitext), so their absolute sizes are not strictly comparable. Layers and relative depth are the safer comparison.

@@ -1,0 +1,20 @@
+dimension,category,n,context won %,flip JL (ctx) mean,flip LL (ctx) mean,divergence JL mean,peak prior JL (prior) mean,shift JL L34 (ctx),shift JL L34 (prior),δ final (ctx),δ final (prior)
+evidentiality,hearsay,394,50.8,19.9,23.1,27.0,32.6,35.8,8.0,22.2,-24.0
+evidentiality,belief_reports,391,51.9,20.2,23.5,27.2,32.5,36.4,7.6,21.7,-23.6
+evidentiality,authority,397,75.6,19.0,23.2,25.5,31.5,44.4,12.5,28.1,-20.8
+epistemic_stance,weak,394,47.5,20.5,23.6,27.2,32.7,33.9,8.6,20.5,-22.9
+epistemic_stance,strong,397,66.0,19.2,23.1,26.2,32.6,42.1,11.0,27.1,-21.9
+form,interrogative,389,49.9,20.4,23.8,26.7,32.7,33.3,8.5,18.8,-22.8
+form,counterfactual,394,55.6,20.1,24.3,26.8,32.1,36.4,12.4,20.8,-18.1
+form,not_at_issue,396,64.6,19.3,23.5,26.2,32.3,41.7,11.6,26.8,-20.8
+form,explicit,396,67.4,18.7,23.6,26.0,32.1,42.0,13.6,26.3,-18.7
+form,material_conditional,397,72.0,19.1,23.2,25.7,31.6,42.5,14.6,26.1,-18.2
+form,supposition,396,75.0,19.6,23.6,25.4,31.4,41.6,17.7,24.7,-14.3
+form,imperative,397,79.3,19.0,23.4,25.3,31.1,44.6,15.2,27.8,-17.5
+tone,informal,393,56.7,20.3,23.8,26.6,32.4,39.0,9.6,24.5,-22.0
+tone,sarcasm,394,56.9,20.3,23.7,26.5,32.4,38.8,9.2,24.0,-22.5
+tone,social_media,395,60.3,19.6,23.3,26.3,32.3,40.3,10.6,25.0,-21.4
+tone,emotional_appeal,395,63.0,20.0,23.7,26.1,32.1,39.4,13.2,24.4,-19.4
+tone,poetic,395,64.6,19.6,23.5,26.3,32.3,41.5,10.7,26.0,-21.3
+tone,child_directed,397,66.5,19.3,23.4,25.9,32.0,42.4,12.1,27.4,-20.9
+tone,formal,396,73.5,19.0,23.3,25.5,31.4,43.6,14.1,27.5,-18.4

@@ -1,0 +1,17 @@
+- **Data used:** qwen3-4b (36 layers), the same 4 relations (author, capital, color, composer) and the same 605 facts × 19 variants as the 1.7B run. Known facts only: 7,503 rows (4,730 context won = 63.0%, 2,773 prior won). Every linguistic category has 389–397 rows.
+- **Layers 0–22: no change.** The assertion shifts δ by only 0.01–0.05 logits on average, in both lenses. Context and memory cannot be told apart in these layers.
+- **Layers 23–25: the turn.** In both lenses the context-won and prior-won curves first separate by more than 2 logits at layer 24. The median divergence layer, where the assertion moves the curve away from the bare question, is also 24 in both lenses (IQR 24–29). The median flip layer for context-won rows is 24 in both lenses.
+- **The turn happens in two steps.** At layer 24 the J-lens shift jumps to 7.2 logits in context-won rows (2.0 in prior-won rows). It then stays flat at about 4–6 logits through layers 25–28. From layer 29 it grows fast: 15 logits at layer 29, 27 at layer 31, and 40 at layers 33–34. The 1.7B model has one smooth rise instead.
+- **Layers 29–35: the decision grows.** The largest J-lens shift is at layer 34: 40.5 logits in context-won rows and 11.1 in prior-won rows. With the logit lens, the largest shift is at the last layer. In prior-won rows the memorised answer is strongest at layer 33 (J-lens median) or at the last layer (logit lens).
+- **Logit lens vs J-lens:** both lenses give the same turning layer (24). From layer 29 on, the J-lens shows about twice the shift of the logit lens. The J-lens flip layer has a long early tail (IQR 10–29) where δ is close to 0. The divergence layer is the more reliable measure.
+- **Linguistic parameters change how often the context wins, not where the turn happens.** Context won from 47.5% (weak stance), 49.9% (interrogative), 50.8% (hearsay) and 51.9% (belief_reports) up to 75.0% (supposition), 75.6% (authority) and 79.3% (imperative). In every category the turn is at layers 23–25, and the mean divergence layer only ranges from 25.3 to 27.2.
+- **Small layer differences still follow behaviour.** Across the 19 categories, the share of context wins correlates with the mean divergence layer at r = −0.97 and with the maximum J-lens shift at r = +0.94. Imperative, supposition, authority and formal diverge earliest (about 25.3–25.5) and push hardest (42–45 logits). Weak, belief_reports and hearsay diverge latest (about 27.0–27.2) and push least (34–36 logits).
+- **Per dimension:**
+  - evidentiality: authority > belief_reports ≈ hearsay;
+  - epistemic stance: strong > weak;
+  - form: imperative is highest and interrogative is lowest;
+  - tone: formal is highest, and informal and sarcasm are lowest.
+- **Caveats:**
+  - Only 4 of 15 relations are used.
+  - δ uses the first answer token only.
+  - Compute was float32 per layer, with weights stored in bf16. This matches the 1.7B run.

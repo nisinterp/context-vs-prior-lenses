@@ -22,7 +22,7 @@ types differ in *where* this happens, or only in *how often* the claim wins.
 **Setup in one paragraph.** Each EoBench item is a multiple-choice prompt. It contains an
 assertion that contradicts a well-known fact, then the question and three options: the
 **context answer** (the one in the assertion), the **prior answer** (the true, memorised one)
-and a **distractor**. Qwen3-1.7B reads the prompt. At the last token, every layer's hidden state
+and a **distractor**. The model (Qwen3-1.7B, and Qwen3-4B for comparison) reads the prompt. At the last token, every layer's hidden state
 is decoded with two lenses: the **logit lens** (final norm + unembedding) and the **J-lens**
 (Jacobian lens: the hidden state is first mapped by a per-layer matrix that predicts the last
 layer; [anthropics/jlens](https://github.com/anthropics/jlens), fitted lenses from
@@ -32,6 +32,8 @@ assertion is also run once per fact. It gives a baseline curve and tells us whet
 knows the fact.
 
 ### Main findings
+
+#### Qwen3-1.7B
 
 Qwen3-1.7B, 4 relations, only facts the model knows (6,710 rows):
 
@@ -55,15 +57,53 @@ Qwen3-1.7B, 4 relations, only facts the model knows (6,710 rows):
 Full report with all figures and the summary table:
 [`results/qwen3-1.7b/qwen3-1.7b_lens_report.pdf`](results/qwen3-1.7b/qwen3-1.7b_lens_report.pdf).
 
+#### Qwen3-4B
+
+Qwen3-4B (36 layers), the same 605 facts, only facts the model knows (7,503 rows):
+
+- **Layers 0–22: nothing.** The assertion moves δ by less than 0.05 logits on average.
+- **Layers 23–25: the turn.** Context-won and prior-won rows first split at **layer 24** in both
+  lenses. The median divergence layer and the median flip layer (context-won rows) are also 24.
+- **The turn comes in two steps.** At layer 24 the J-lens shift jumps to +7 logits, then stays
+  at +4 to +6 through layers 25–28. A second, larger rise starts at layer 29 and peaks at
+  **layer 34: +40.5 logits** when the context wins and +11.1 when the prior wins.
+- **Same pattern by type as in 1.7B.** The context wins 47.5% of the time for weak stance and
+  about 50% for interrogative and hearsay, up to 75.6% for authority and 79.3% for imperative.
+  The turn is at layers 23–25 for every type. The share of context wins correlates −0.97 with the
+  divergence layer and +0.94 with the maximum J-lens shift.
+
+Full report: [`results/qwen3-4b/qwen3-4b_lens_report.pdf`](results/qwen3-4b/qwen3-4b_lens_report.pdf);
+all findings: [`results/qwen3-4b/findings.md`](results/qwen3-4b/findings.md).
+
+#### Qwen3-1.7B vs. Qwen3-4B
+
+- **The turn sits at the same relative depth:** layer 19 of 28 (depth 0.70) in 1.7B and layer 24
+  of 36 (depth 0.69) in 4B.
+- **The decision builds up differently after the turn.** In 1.7B the shift rises smoothly and
+  peaks at depth 0.89. In 4B it comes in two steps and peaks at depth 0.97, so more of the
+  decision is made in the last layers.
+- **4B knows more facts but follows the context a bit less** (65.6% vs 58.8% of rows have a known
+  fact; context wins in 63.0% vs 66.6% of them). When 4B keeps its memorised answer, the assertion
+  still pushes it harder than in 1.7B (+11.1 vs +6.4 logits at the peak).
+- **The same types persuade both models** (Spearman ρ = 0.90 over the 19 types). Sarcasm
+  (−14 points), interrogative (−11), hearsay (−9), informal (−8) and weak stance (−8) lose the
+  most in 4B. Counterfactual is the only type that gains a lot (+7).
+
+![Shift caused by the assertion vs. relative depth, both models](results/comparison/cmp2_shift_relative_depth.png)
+
+Full comparison report: [`results/comparison/qwen3-1.7b_vs_4b_report.pdf`](results/comparison/qwen3-1.7b_vs_4b_report.pdf);
+all findings: [`results/comparison/findings.md`](results/comparison/findings.md).
+
 ### Scope: what was run and what was not
 
-- **One model, part of the data.** The full Qwen3-1.7B run (65,778 rows) was stopped after
+- **Two models, part of the data.** The full Qwen3-1.7B run (65,778 rows) was stopped after
   11,514 rows (17.5%, 6.6 hours on CPU). The dataset is sorted by relation, so these rows cover
   only **4 of the 15 relations**: author (329 facts), capital (128), color (32) and composer
   (116 of 333). All results are for this subset. Every fact in it has all 19 linguistic variants,
   so the types are compared on the same facts. Overall rates may differ for the other relations.
-- **Qwen3-4B and Qwen3-8B: smoke tests only** (`results/smoke_tests/`). On this CPU-only
-  machine (4 cores, 15 GB RAM) a full run would take about 14 days for 4B and weeks for 8B.
+- **Qwen3-4B was then run on exactly the same 610 facts** (11,590 rows, 6.4 hours with the
+  faster `run_flip.py`), so the two models are compared on the same 605 complete facts.
+- **Qwen3-8B: smoke tests only** (`results/smoke_tests/`).
 
 ## Repository structure
 
@@ -79,10 +119,16 @@ Full report with all figures and the summary table:
 ├── experiment/
 │   ├── run_flip.py                    main experiment: runs the model on every prompt, decodes every
 │   │                                  layer with the logit lens and the J-lens, saves curves and layer metrics
+│   │                                  (one batch per fact; bf16 weights with float32 compute on CPU)
 │   └── make_subset.py                 raw run output -> analysis subset (complete facts only, + relation)
 │
 ├── analysis/
-│   └── lens_analysis.ipynb            all figures, tables and the PDF report (already run, outputs saved)
+│   ├── lens_analysis.ipynb            Qwen3-1.7B: all figures, tables and the PDF report (already run, outputs saved)
+│   ├── lens_analysis_4b.ipynb         Qwen3-4B: the same figures and report
+│   ├── compare_1.7b_vs_4b.ipynb       1.7B vs 4B: comparison figures, table and PDF report
+│   └── tools/
+│       ├── make_nb_model.py           builds and runs a single-model notebook (used for lens_analysis_4b.ipynb)
+│       └── make_nb_compare.py         builds and runs the comparison notebook
 │
 └── results/
     ├── qwen3-1.7b/
@@ -100,6 +146,21 @@ Full report with all figures and the summary table:
     │       ├── fig5_layer_distributions.png   histograms of flip / divergence / peak-prior layers
     │       ├── fig6_key_layers_by_category.png  mean key layers per type, with 95% CI
     │       └── summary_by_category.csv        the summary table behind the figures
+    ├── qwen3-4b/                      same layout as qwen3-1.7b/ (36 layers)
+    │   ├── raw/qwen3-4b_raw.parquet, raw/run.log
+    │   ├── qwen3-4b_4relations.parquet / .csv  605 facts x 19 variants = 11,495 rows
+    │   ├── qwen3-4b_lens_report.pdf
+    │   ├── findings.md                         written findings for 4B
+    │   └── figures/                            fig1-fig6 and summary_by_category.csv
+    ├── comparison/                    Qwen3-1.7B vs Qwen3-4B
+    │   ├── qwen3-1.7b_vs_4b_report.pdf        report: findings, 5 figures, table
+    │   ├── findings.md                         written findings of the comparison
+    │   ├── cmp1_behaviour.png                  % context won per type, both models
+    │   ├── cmp2_shift_relative_depth.png       assertion shift vs relative depth (both lenses)
+    │   ├── cmp3_jlens_absolute_layers.png      J-lens δ and shift on absolute layers
+    │   ├── cmp4_key_layers_relative.png        divergence / flip layers per type, relative depth
+    │   ├── cmp5_types_scatter.png              % context won per type: 1.7B vs 4B
+    │   └── comparison_by_category.csv          the table behind the figures
     └── smoke_tests/                   short test runs used to check the code and time the models
         ├── qwen3-1.7b_test5.parquet           5 rows, Qwen3-1.7B (before the speed-up below)
         ├── qwen3-4b_test5.parquet             5 rows, Qwen3-4B
@@ -146,8 +207,8 @@ distractor is Mao Zedong.
 2. **Main run:** the prompt with the assertion, in Qwen3's chat template with thinking turned
    off. The hidden state at the last position is taken after every layer.
 3. **Two lenses on every layer:**
-   - **logit lens:** `lm_head(norm(h_l))`, for layers 0–27;
-   - **J-lens:** `lm_head(norm(h_l @ J_l^T))`, for layers 0–26 (the lens has no matrix for the last layer).
+   - **logit lens:** `lm_head(norm(h_l))`, for every layer (0–27 in 1.7B, 0–35 in 4B);
+   - **J-lens:** `lm_head(norm(h_l @ J_l^T))`, for every layer except the last (the lens has no matrix for it).
 4. **δ_l = logit(context answer) − logit(prior answer).** The score of an answer is the
    logsumexp over its first token in four spellings: with and without a leading space, and with
    and without a capital letter. If two options share a first token the fact is skipped (5 facts
@@ -159,7 +220,8 @@ distractor is Mao Zedong.
    - `divergence_*`: first layer from which δ with the assertion stays more than 2 logits above the baseline δ;
    - `peak_prior_*`: layer with the lowest δ, where the memorised answer is strongest.
 
-Rows are processed fact by fact. Partial results are saved every 20 rows to `<out>_parts/`, and a
+Rows are processed fact by fact: the baseline and the 19 variants of a fact go through the model
+as one batch (left padding; `--batch-size 1` runs them one by one with the same result). Partial results are saved every 20 rows to `<out>_parts/`, and a
 rerun of the same command skips rows that are already done. When the run finishes, the parts are
 merged into `<out>`.
 
@@ -174,14 +236,16 @@ Main output columns: `knows_prior`, `choice`, `p_choice`, `flip_logit_lens`, `fl
 
 All runs were made on CPU (Intel Xeon Gold 6230R, 4 cores, 15 GB RAM, no GPU).
 `run_flip.py` picks the precision itself (`--dtype auto`):
-- on CPU, float32 if the model fits in RAM, otherwise bfloat16 (this CPU emulates bfloat16, about 2x slower);
+- on CPU, float32 if the model fits in RAM. Otherwise the weights stay in bfloat16 and each
+  decoder block is copied to float32 only while it runs, because this CPU emulates bfloat16
+  arithmetic (3–4x slower). The results are the same as with a float32 model;
 - on a GPU, bfloat16.
 
 | model | precision | time per row (this machine) |
 |---|---|---|
-| Qwen3-1.7B | float32 | ~2.1 s (65,778 rows ≈ 38 h) |
-| Qwen3-4B | bfloat16 | ~18 s (≈ 14 days) |
-| Qwen3-8B | bfloat16, partly from swap | 35–95 s |
+| Qwen3-1.7B | float32 | ~2.1 s (11,590 rows ≈ 6.6 h; whole dataset ≈ 38 h) |
+| Qwen3-4B | bf16 weights, float32 compute, batch per fact | ~2.0 s (11,590 rows = 6.4 h; peak RAM ≈ 6 GB) |
+| Qwen3-8B | bfloat16, partly from swap (older version of the script) | 35–95 s |
 
 ### Software
 
@@ -239,6 +303,23 @@ python experiment/make_subset.py \
 On the saved raw file this reproduces `qwen3-1.7b_4relations.parquet` exactly: 605 facts,
 11,495 rows. Fact 610 is dropped because only 5 of its 19 variants were saved.
 
+**Qwen3-4B:** the same two steps with `models/qwen3-4b`, the lens
+`lenses/qwen3-4b/jlens/Salesforce-wikitext/Qwen3-4B_jacobian_lens.pt` and the paths under
+`results/qwen3-4b/` (`raw/qwen3-4b_raw.parquet`, `qwen3-4b_4relations.parquet`). We ran it as a
+systemd user service with a memory cap, so that it survives the end of the session and cannot
+take the machine down:
+
+```bash
+systemd-run --user --unit=qwen3-4b-run --working-directory=$PWD \
+    -p MemoryMax=13G -p MemorySwapMax=2G -p Environment=PYTHONUNBUFFERED=1 \
+    -p StandardOutput=append:$PWD/results/qwen3-4b/raw/run.log -p StandardError=append:$PWD/results/qwen3-4b/raw/run.log \
+    $PWD/.venv/bin/python experiment/run_flip.py --data data/eobench_mcq_with_distractors.csv.gz --sep , \
+    --model models/qwen3-4b --lens lenses/qwen3-4b/jlens/Salesforce-wikitext/Qwen3-4B_jacobian_lens.pt \
+    --limit 11590 --save-every 20 --out results/qwen3-4b/raw/qwen3-4b_raw.parquet
+```
+The 4B subset has the same 605 facts and 11,495 rows (same tokenizer, so the same facts are
+skipped).
+
 **3. Run the analysis.** Open `analysis/lens_analysis.ipynb` and run all cells, or run it
 headless:
 
@@ -246,13 +327,25 @@ headless:
 jupyter nbconvert --to notebook --execute --inplace analysis/lens_analysis.ipynb   # needs `pip install nbconvert`
 ```
 It writes `results/qwen3-1.7b/figures/*` and `results/qwen3-1.7b/qwen3-1.7b_lens_report.pdf`.
+`analysis/lens_analysis_4b.ipynb` and `analysis/compare_1.7b_vs_4b.ipynb` are run the same way.
+They can also be rebuilt from scratch (findings text taken from the `findings.md` files):
+
+```bash
+cd analysis
+python tools/make_nb_model.py lens_analysis_4b.ipynb ../results/qwen3-4b/findings.md \
+    qwen3-4b results/qwen3-4b/qwen3-4b_4relations.parquet results/qwen3-4b
+python tools/make_nb_compare.py compare_1.7b_vs_4b.ipynb ../results/comparison/findings.md \
+    results/qwen3-1.7b/qwen3-1.7b_4relations.parquet results/qwen3-4b/qwen3-4b_4relations.parquet results/comparison
+```
 The notebook uses only rows where the model knows the fact (`knows_prior`) and the final answer
 is the context or the prior answer. The 54 rows that ended on the distractor are left out.
 
 ## Limitations
 
-- Only **4 of 15 relations** and **one model** (Qwen3-1.7B). The other relations and the
-  larger Qwen3 sizes were not run to the end.
+- Only **4 of 15 relations** and **two model sizes** (Qwen3-1.7B and 4B). The other relations
+  and Qwen3-8B were not run to the end.
+- The J-lens matrices of the two models were fitted separately, so absolute shift sizes are not
+  strictly comparable between models; layers and relative depth are the safer comparison.
 - δ uses the **first token** of each answer only. Multi-token answers that share a first token
   are skipped.
 - **Flip layer is noisy:** in the early layers δ is close to 0 and can be slightly positive by
