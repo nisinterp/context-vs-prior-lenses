@@ -131,6 +131,7 @@ models, correlations within groups): [`results/comparison/findings.md`](results/
 │   ├── lens_analysis_4b.ipynb         Qwen3-4B: the same figures and report
 │   ├── compare_1.7b_vs_4b.ipynb       1.7B vs 4B: comparison figures, table and PDF report
 │   ├── robustness.py                  bootstrap CIs, facts known by both models, correlations within groups
+│   ├── plot_one_fact.py               J-lens curves of one fact per linguistic type, both models
 │   └── tools/
 │       ├── make_nb_model.py           builds and runs a single-model notebook (both lens_analysis notebooks)
 │       └── make_nb_compare.py         builds and runs the comparison notebook
@@ -171,6 +172,7 @@ models, correlations within groups): [`results/comparison/findings.md`](results/
     │   ├── cmp4_key_layers_relative.png        divergence / flip layers per type, relative depth
     │   ├── cmp5_types_scatter.png              % context won per type: 1.7B vs 4B
     │   ├── comparison_by_category.csv          the table behind the figures
+    │   ├── fact338_by_type.png                 one fact (338), δ and δ0 per type, both models (analysis/plot_one_fact.py)
     │   └── robustness/                         tables written by analysis/robustness.py
     └── smoke_tests/                   short test runs used to check the code and time the models;
         │                              all made with OLDER versions of run_flip.py (see below)
@@ -369,6 +371,14 @@ python analysis/robustness.py
 ```
 It writes `results/comparison/robustness/*.csv`; the numbers are in the appendix of
 `results/comparison/findings.md`.
+
+**One fact in detail** (a few seconds, saved subsets only): J-lens δ with the assertion and δ0
+without it for every linguistic type of one fact, both models, no averaging:
+
+```bash
+python analysis/plot_one_fact.py --fact 338
+```
+It writes `results/comparison/fact338_by_type.png`. Any `fact_index` known to both models can be used.
 
 **Tests.** Lightweight tests on dummy data (no model, no downloads):
 
