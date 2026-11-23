@@ -132,6 +132,7 @@ models, correlations within groups): [`results/comparison/findings.md`](results/
 │   ├── compare_1.7b_vs_4b.ipynb       1.7B vs 4B: comparison figures, table and PDF report
 │   ├── robustness.py                  bootstrap CIs, facts known by both models, correlations within groups
 │   ├── plot_one_fact.py               J-lens curves of one fact per linguistic type, both models
+│   ├── plot_ctx_vs_strength.py        % context won vs strength of the fact (δ0), per type, both models
 │   └── tools/
 │       ├── make_nb_model.py           builds and runs a single-model notebook (both lens_analysis notebooks)
 │       └── make_nb_compare.py         builds and runs the comparison notebook
@@ -173,6 +174,7 @@ models, correlations within groups): [`results/comparison/findings.md`](results/
     │   ├── cmp5_types_scatter.png              % context won per type: 1.7B vs 4B
     │   ├── comparison_by_category.csv          the table behind the figures
     │   ├── fact338_by_type.png                 one fact (338), δ and δ0 per type, both models (analysis/plot_one_fact.py)
+    │   ├── ctx_vs_strength.png                 % context won vs strength of the fact, per type (analysis/plot_ctx_vs_strength.py)
     │   └── robustness/                         tables written by analysis/robustness.py
     └── smoke_tests/                   short test runs used to check the code and time the models;
         │                              all made with OLDER versions of run_flip.py (see below)
@@ -379,6 +381,15 @@ without it for every linguistic type of one fact, both models, no averaging:
 python analysis/plot_one_fact.py --fact 338
 ```
 It writes `results/comparison/fact338_by_type.png`. Any `fact_index` known to both models can be used.
+
+**Strength of the fact vs wording** (a few seconds, saved subsets only): % context won as a function of
+δ0 (the question without the assertion, last layer, logit lens), split into 5 equal-size groups, one
+line per linguistic type:
+
+```bash
+python analysis/plot_ctx_vs_strength.py
+```
+It writes `results/comparison/ctx_vs_strength.png`.
 
 **Tests.** Lightweight tests on dummy data (no model, no downloads):
 
