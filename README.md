@@ -77,8 +77,10 @@ all findings: [`results/qwen3-4b/findings.md`](results/qwen3-4b/findings.md).
 
 #### Qwen3-1.7B vs. Qwen3-4B
 
-- **The turn sits at the same relative depth:** layer 19 of 28 (depth 0.70) in 1.7B and layer 24
-  of 36 (depth 0.69) in 4B.
+- **The turn sits at the same relative depth:** layer 19 of layers 0–27 (depth 19/27 = 0.70) in
+  1.7B and layer 24 of layers 0–35 (depth 24/35 = 0.69) in 4B. Relative depth = layer / (number
+  of layers − 1), so 0 is the first layer and 1 the last; one layer is a step of 0.037 in 1.7B
+  and 0.029 in 4B.
 - **The decision builds up differently after the turn.** In 1.7B the shift rises smoothly and
   peaks at depth 0.89. In 4B it comes in two steps and peaks at depth 0.97, so more of the
   decision is made in the last layers.
