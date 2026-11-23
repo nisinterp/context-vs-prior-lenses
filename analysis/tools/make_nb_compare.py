@@ -229,6 +229,9 @@ cells.append(code("""def text_page(pdf, title, paragraphs):
     yy = 0.91
     for p in paragraphs:
         for line in wrap(p, 95) or ['']:
+            if yy < 0.05:  # page full: continue on a new page
+                pdf.savefig(fig); plt.close(fig)
+                fig = plt.figure(figsize=(8.27, 11.69)); yy = 0.95
             fig.text(0.07, yy, line, fontsize=9.5, va='top'); yy -= 0.018
         yy -= 0.012
     pdf.savefig(fig); plt.close(fig)

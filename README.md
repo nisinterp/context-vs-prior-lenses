@@ -5,9 +5,6 @@ Evaluating LLM Responses to Expressions of Belief* (ACL 2026;
 code: [clarakuempel/EoB](https://github.com/clarakuempel/EoB),
 data: [kdu4108/EoBench](https://huggingface.co/datasets/kdu4108/EoBench)).
 
-## Project authors
-`<Authors>`
-
 ## What this project is about
 
 The EoBench paper shows that the **linguistic form** of a user's claim changes whether a model
@@ -85,16 +82,20 @@ all findings: [`results/qwen3-4b/findings.md`](results/qwen3-4b/findings.md).
   peaks at depth 0.89. In 4B it comes in two steps and peaks at depth 0.97, so more of the
   decision is made in the last layers.
 - **4B knows more facts but follows the context a bit less** (65.6% vs 58.8% of rows have a known
-  fact; context wins in 63.0% vs 66.6% of them). When 4B keeps its memorised answer, the assertion
+  fact; context wins in 63.0% vs 66.6% of them, each model on the facts it knows). On the 291
+  facts that both models know the gap is larger: 52.7% vs 60.0% (95% CI of the difference
+  −9.9 to −4.8 points; see the robustness appendix in the comparison findings). When 4B keeps its memorised answer, the assertion
   still pushes it harder than in 1.7B (+11.1 vs +6.4 logits at the peak).
 - **The same types persuade both models** (Spearman ρ = 0.90 over the 19 types). Sarcasm
   (−14 points), interrogative (−11), hearsay (−9), informal (−8) and weak stance (−8) lose the
-  most in 4B. Counterfactual is the only type that gains a lot (+7).
+  most in 4B. Counterfactual is the only type that gains a lot (+7), but on the facts both models
+  know this gain shrinks to +2.8 and is within noise.
 
 ![Shift caused by the assertion vs. relative depth, both models](results/comparison/cmp2_shift_relative_depth.png)
 
 Full comparison report: [`results/comparison/qwen3-1.7b_vs_4b_report.pdf`](results/comparison/qwen3-1.7b_vs_4b_report.pdf);
-all findings: [`results/comparison/findings.md`](results/comparison/findings.md).
+all findings, with an appendix of robustness checks (bootstrap intervals, facts known by both
+models, correlations within groups): [`results/comparison/findings.md`](results/comparison/findings.md).
 
 ### Scope: what was run and what was not
 
@@ -112,6 +113,7 @@ all findings: [`results/comparison/findings.md`](results/comparison/findings.md)
 ```
 .
 ├── README.md                          this file
+├── LICENSE                            MIT (code and results; see "License" for the dataset)
 ├── requirements.txt                   Python packages (versions used for the runs)
 │
 ├── data/
@@ -128,9 +130,14 @@ all findings: [`results/comparison/findings.md`](results/comparison/findings.md)
 │   ├── lens_analysis.ipynb            Qwen3-1.7B: all figures, tables and the PDF report (already run, outputs saved)
 │   ├── lens_analysis_4b.ipynb         Qwen3-4B: the same figures and report
 │   ├── compare_1.7b_vs_4b.ipynb       1.7B vs 4B: comparison figures, table and PDF report
+│   ├── robustness.py                  bootstrap CIs, facts known by both models, correlations within groups
 │   └── tools/
-│       ├── make_nb_model.py           builds and runs a single-model notebook (used for lens_analysis_4b.ipynb)
+│       ├── make_nb_model.py           builds and runs a single-model notebook (both lens_analysis notebooks)
 │       └── make_nb_compare.py         builds and runs the comparison notebook
+│
+├── tests/                             lightweight tests on dummy data (no model needed)
+│   ├── test_run_flip.py               layer metrics, delta, first tokens, lenses
+│   └── test_make_subset.py            subset building on a tiny dummy run
 │
 └── results/
     ├── qwen3-1.7b/
@@ -140,6 +147,7 @@ all findings: [`results/comparison/findings.md`](results/comparison/findings.md)
     │   ├── qwen3-1.7b_4relations.parquet      analysis subset: 605 facts x 19 variants = 11,495 rows
     │   ├── qwen3-1.7b_4relations.csv          the same as CSV (per-layer arrays stored as JSON text)
     │   ├── qwen3-1.7b_lens_report.pdf         report: findings, 6 figures, summary table
+    │   ├── findings.md                         written findings for 1.7B
     │   └── figures/
     │       ├── fig1_behaviour.png             % context won vs. prior won, per linguistic type
     │       ├── fig2_lens_curves.png           mean δ by layer per type (context-won vs. prior-won rows)
@@ -162,15 +170,26 @@ all findings: [`results/comparison/findings.md`](results/comparison/findings.md)
     │   ├── cmp3_jlens_absolute_layers.png      J-lens δ and shift on absolute layers
     │   ├── cmp4_key_layers_relative.png        divergence / flip layers per type, relative depth
     │   ├── cmp5_types_scatter.png              % context won per type: 1.7B vs 4B
-    │   └── comparison_by_category.csv          the table behind the figures
-    └── smoke_tests/                   short test runs used to check the code and time the models
-        ├── qwen3-1.7b_test5.parquet           5 rows, Qwen3-1.7B (before the speed-up below)
-        ├── qwen3-4b_test5.parquet             5 rows, Qwen3-4B
-        ├── qwen3-8b_test.parquet / .log       3 rows, Qwen3-8B, earlier version of the script
-        └── qwen3-8b_first40.parquet / .log    first 40 rows of a full Qwen3-8B run, stopped (~35-95 s/row)
+    │   ├── comparison_by_category.csv          the table behind the figures
+    │   └── robustness/                         tables written by analysis/robustness.py
+    └── smoke_tests/                   short test runs used to check the code and time the models;
+        │                              all made with OLDER versions of run_flip.py (see below)
+        ├── qwen3-1.7b_test5.parquet           5 rows, Qwen3-1.7B, float32, one prompt at a time
+        ├── qwen3-4b_test5.parquet             5 rows, Qwen3-4B, pure bfloat16 (no float32 compute)
+        ├── qwen3-8b_test.parquet / .log       3 rows, Qwen3-8B, an early version without the baseline metrics
+        └── qwen3-8b_first40.parquet / .log    first 40 rows of a full Qwen3-8B run, bfloat16, stopped (~35-95 s/row)
 ```
 
 Not in the repo (downloaded in Setup): `models/` (Qwen3 weights) and `lenses/` (J-lens files).
+
+**Code versions.** The Qwen3-1.7B results were produced by an earlier version of `run_flip.py`
+that ran one prompt at a time in float32. The current version (used for Qwen3-4B) runs the
+baseline and the 19 variants of a fact as one batch and, when the model does not fit in RAM as
+float32, keeps the weights in bfloat16 and computes each block in float32. The computation of
+prompts, tokens, lenses, δ and layer metrics is the same. On 38 rows of Qwen3-1.7B both versions
+gave the same choices and layer metrics, and the δ curves differed by at most 0.001 logits.
+The smoke tests were made with even earlier versions; the 5-row bfloat16 Qwen3-4B test differs
+from the final float32-compute run on 1 of 5 rows, where the two answers were nearly tied.
 
 ## How it works
 
@@ -245,7 +264,7 @@ All runs were made on CPU (Intel Xeon Gold 6230R, 4 cores, 15 GB RAM, no GPU).
 
 | model | precision | time per row (this machine) |
 |---|---|---|
-| Qwen3-1.7B | float32 | ~2.1 s (11,590 rows ≈ 6.6 h; whole dataset ≈ 38 h) |
+| Qwen3-1.7B | float32, one prompt at a time (earlier version) | ~2.1 s (11,590 rows ≈ 6.6 h; whole dataset ≈ 38 h) |
 | Qwen3-4B | bf16 weights, float32 compute, batch per fact | ~2.0 s (11,590 rows = 6.4 h; peak RAM ≈ 6 GB) |
 | Qwen3-8B | bfloat16, partly from swap (older version of the script) | 35–95 s |
 
@@ -290,7 +309,7 @@ command at any time. Run it so that it outlives your session, for example with
 desktop session ends; that is what stopped our full run.
 
 Other useful options:
-- `--sample-per-category N`: N random facts with all their 19 variants;
+- `--n-facts N` (old name `--sample-per-category`): N random facts with all their 19 variants;
 - `--full-vocab-jlens`: decode the J-lens over the whole vocabulary (slower, same δ);
 - `--div-thr`: threshold for the divergence layer (default 2 logits).
 
@@ -326,7 +345,7 @@ skipped).
 headless:
 
 ```bash
-jupyter nbconvert --to notebook --execute --inplace analysis/lens_analysis.ipynb   # needs `pip install nbconvert`
+jupyter execute --inplace analysis/lens_analysis.ipynb   # `jupyter execute` comes with nbclient
 ```
 It writes `results/qwen3-1.7b/figures/*` and `results/qwen3-1.7b/qwen3-1.7b_lens_report.pdf`.
 `analysis/lens_analysis_4b.ipynb` and `analysis/compare_1.7b_vs_4b.ipynb` are run the same way.
@@ -339,8 +358,23 @@ python tools/make_nb_model.py lens_analysis_4b.ipynb ../results/qwen3-4b/finding
 python tools/make_nb_compare.py compare_1.7b_vs_4b.ipynb ../results/comparison/findings.md \
     results/qwen3-1.7b/qwen3-1.7b_4relations.parquet results/qwen3-4b/qwen3-4b_4relations.parquet results/comparison
 ```
-The notebook uses only rows where the model knows the fact (`knows_prior`) and the final answer
-is the context or the prior answer. The 54 rows that ended on the distractor are left out.
+The notebooks use only rows where the model knows the fact (`knows_prior`) and the final answer
+is the context or the prior answer. The rows that ended on the distractor are left out (54 for
+1.7B, 40 for 4B).
+
+**4. Robustness checks** (a few seconds, saved subsets only):
+
+```bash
+python analysis/robustness.py
+```
+It writes `results/comparison/robustness/*.csv`; the numbers are in the appendix of
+`results/comparison/findings.md`.
+
+**Tests.** Lightweight tests on dummy data (no model, no downloads):
+
+```bash
+python -m unittest discover tests
+```
 
 ## Limitations
 
@@ -354,6 +388,29 @@ is the context or the prior answer. The 54 rows that ended on the distractor are
   chance, which gives the flip layer an early tail (IQR 14–21). The divergence layer, measured
   against the baseline, is the more reliable layer measure.
 - The lenses were fitted on Wikitext by Neuronpedia, not on prompts like these.
+- **The final answer is not generated text.** `choice` (context won / prior won / distractor) is
+  the option whose first token has the highest score at the last layer, and `knows_prior` is the
+  same test on the prompt without the assertion. The text the model would actually generate was
+  not checked, so these values can differ from the generation-based metric of the EoBench paper.
+- **Baseline option order.** The baseline prompt (without the assertion) is built from the first
+  variant of each fact and keeps that variant's option order. The 19 variants each have their own
+  random option order, so the shift of δ (with − without the assertion) also contains the effect
+  of the option order. This adds random noise, not a systematic bias.
+- **Uncertainty.** Per linguistic type, % context won has a 95% bootstrap interval of about
+  ±4–5 points (facts resampled, `analysis/robustness.py`). Differences of a few points between
+  types are not reliable.
+- **Different known facts.** Each model is analysed on the facts it knows, and 4B knows more
+  facts than 1.7B. The robustness appendix repeats the comparison on the facts both models know.
 - Mean curves are split by the model's **final answer**, so in `fig2` the context-won and
   prior-won curves must end on opposite sides of 0. `fig3` and `fig4` subtract the baseline and
   do not have this problem.
+
+## License
+
+The code and the results in this repository are released under the [MIT License](LICENSE).
+
+The dataset in `data/` is derived from EoBench (Du, Kümpel, Wastl & Warstadt, ACL 2026;
+[kdu4108/EoBench](https://huggingface.co/datasets/kdu4108/EoBench),
+[clarakuempel/EoB](https://github.com/clarakuempel/EoB)). At the time of writing the authors do
+not state a license for it. It is included only so that the results can be reproduced; the
+original authors' terms apply, and the MIT License does not cover it.

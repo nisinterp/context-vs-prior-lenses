@@ -1,4 +1,4 @@
-- **Same data, two sizes:** both models saw the same 605 facts × 19 variants. The 4B model knows more of the facts (65.6% vs 58.8% of rows have a known prior). It follows the context slightly less often (63.0% vs 66.6% of known-fact rows).
+- **Same data, two sizes:** both models saw the same 605 facts × 19 variants. The 4B model knows more of the facts (65.6% vs 58.8% of rows have a known prior). It follows the context slightly less often (63.0% vs 66.6% of known-fact rows; each model on the facts it knows). On the 291 facts that both models know the gap is larger: 52.7% vs 60.0% (see Appendix).
 - **The turn sits at the same relative depth.** The context-won and prior-won curves split at layer 19 of layers 0–27 in 1.7B (depth 19/27 = 0.70) and at layer 24 of layers 0–35 in 4B (depth 24/35 = 0.69); relative depth = layer / (number of layers − 1). In both models nothing readable happens before that point (mean |shift| below 0.3 logits). The turn is narrow, about 3 layers. The larger model has more layers in total, but its decision point does not move earlier or later in relative terms.
 - **The decision builds up differently after the turn.**
   - In 1.7B the J-lens shift rises smoothly and peaks at depth 0.89 (layer 24, 45 logits), then falls back at the last layers.
@@ -8,10 +8,19 @@
 - **The same types persuade both models.** The ranking of the 19 types by context-won share is highly similar (Spearman ρ = 0.90). Authority, imperative, formal and supposition are on top in both models; belief_reports and weak stance are near the bottom in both.
 - **Where the models differ by type:**
   - Several types lose much more of their effect in 4B: sarcasm (70.6% → 56.9%), interrogative (61.0% → 49.9%), hearsay (59.9% → 50.8%), informal (64.8% → 56.7%) and weak stance (55.4% → 47.5%).
-  - Counterfactual is the only type that gains a lot (48.4% → 55.6%). Supposition and material_conditional gain a little (+2–3 points).
-  - The larger model is more sensitive to how reliable the assertion sounds.
-- **Layer timing follows behaviour in both models.** Types that win more often diverge earlier and push harder. The correlation of context-won share with the divergence layer is −0.94 in 1.7B and −0.97 in 4B; with the maximum J-lens shift it is +0.97 and +0.94. In relative depth the per-type divergence layers sit in the same narrow band in both models (0.72–0.78).
+  - Counterfactual is the only type that gains a lot (48.4% → 55.6%). Supposition and material_conditional gain a little (+2–3 points). On the facts both models know, the counterfactual gain shrinks to +2.8 points and is within noise (see Appendix).
+  - One possible reading is that the larger model is more sensitive to how reliable the assertion sounds. This is not established: on the facts both models know, authority also loses 10 points.
+- **Layer timing follows behaviour in both models.** Types that win more often diverge earlier and push harder. The correlation of context-won share with the divergence layer is −0.94 in 1.7B and −0.97 in 4B; with the maximum J-lens shift it is +0.97 and +0.94. Part of the divergence correlation is mechanical (context-won rows diverge earlier, so types with more such rows get an earlier mean); within context-won rows only it is still −0.88 and −0.91, within prior-won rows −0.47 and −0.72 (see Appendix). In relative depth the per-type divergence layers sit in the same narrow band in both models (0.72–0.78).
 - **Caveats:**
   - Only 4 of 15 relations are used, and there are only two model sizes.
-  - δ uses the first answer token only.
+  - δ uses the first answer token only. The final answer (context won / prior won) is the option with the highest first-token score at the last layer, not the text the model generates.
+  - Per type, % context won has a 95% bootstrap interval of about ±4–5 points (facts resampled), so differences of a few points between types are not reliable.
+  - The baseline prompt (without the assertion) keeps the option order of the first variant of the fact, while each variant has its own random option order. The shift of δ therefore also contains the effect of the option order (random noise, not a systematic bias).
   - The J-lens matrices for the two models were fitted separately (on wikitext), so their absolute sizes are not strictly comparable. Layers and relative depth are the safer comparison.
+
+**Appendix: robustness checks.** Computed by `analysis/robustness.py` from the saved subsets (no model run); tables in `results/comparison/robustness/`. Bootstrap: 2,000 resamples of facts (the 19 variants of a fact are not independent), 95% intervals.
+
+- **Facts known by both models.** 1.7B knows 356 facts, 4B knows 397; 291 are known by both. On these 291 facts context wins in 60.0% of rows for 1.7B and 52.7% for 4B: a difference of −7.3 points (95% CI −9.9 to −4.8), about twice the −3.6 points on each model's own facts.
+- **Per type on shared facts (4B − 1.7B):** sarcasm −17.8, interrogative −13.4, hearsay −13.3, informal −12.9, weak −10.2, authority −10.0, child_directed −9.3, strong −9.0, formal −8.3, poetic −7.7, explicit −6.6, not_at_issue −6.1, social_media −5.7, emotional_appeal −5.4 points; all these intervals exclude 0. Material_conditional (−2.3), belief_reports (−2.3), imperative (−1.4), supposition (+1.0) and counterfactual (+2.8) do not differ reliably.
+- **The type ranking is stable:** Spearman ρ = 0.91 on shared facts (0.90 on each model's own facts).
+- **Correlation of % context won with the mean divergence layer (J-lens) across the 19 types:** all rows −0.94 (1.7B) and −0.97 (4B); context-won rows only −0.88 and −0.91; prior-won rows only −0.47 and −0.72. The link holds within context-won rows, but the all-rows value is inflated by the mix of context-won and prior-won rows.
