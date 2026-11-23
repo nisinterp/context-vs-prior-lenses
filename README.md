@@ -133,6 +133,7 @@ models, correlations within groups): [`results/comparison/findings.md`](results/
 │   ├── robustness.py                  bootstrap CIs, facts known by both models, correlations within groups
 │   ├── plot_one_fact.py               J-lens curves of one fact per linguistic type, both models
 │   ├── plot_ctx_vs_strength.py        % context won vs strength of the fact (δ0), per type, both models
+│   ├── plot_cmp3_delta0.py            cmp3 with δ0 (the question without the assertion) added
 │   └── tools/
 │       ├── make_nb_model.py           builds and runs a single-model notebook (both lens_analysis notebooks)
 │       └── make_nb_compare.py         builds and runs the comparison notebook
@@ -170,6 +171,7 @@ models, correlations within groups): [`results/comparison/findings.md`](results/
     │   ├── cmp1_behaviour.png                  % context won per type, both models
     │   ├── cmp2_shift_relative_depth.png       assertion shift vs relative depth (both lenses)
     │   ├── cmp3_jlens_absolute_layers.png      J-lens δ and shift on absolute layers
+    │   ├── cmp3_with_delta0.png                the same with δ0 without the assertion (analysis/plot_cmp3_delta0.py)
     │   ├── cmp4_key_layers_relative.png        divergence / flip layers per type, relative depth
     │   ├── cmp5_types_scatter.png              % context won per type: 1.7B vs 4B
     │   ├── comparison_by_category.csv          the table behind the figures
@@ -390,6 +392,14 @@ line per linguistic type:
 python analysis/plot_ctx_vs_strength.py
 ```
 It writes `results/comparison/ctx_vs_strength.png`.
+
+**Baseline curves** (a few seconds, saved subsets only): cmp3 with the mean δ0 of the same rows
+(the question without the assertion) drawn as thin lines:
+
+```bash
+python analysis/plot_cmp3_delta0.py
+```
+It writes `results/comparison/cmp3_with_delta0.png`.
 
 **Tests.** Lightweight tests on dummy data (no model, no downloads):
 
