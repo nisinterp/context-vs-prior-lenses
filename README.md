@@ -137,6 +137,7 @@ models, correlations within groups): [`results/comparison/findings.md`](results/
 │   ├── plot_shift_by_type.py          mean assertion shift over all rows, one line per type, both models
 │   ├── plot_shift_strong_weak.py      the same, split into strong and weak facts
 │   ├── plot_shift_strong_weak_outcome.py  the same, also split by context won / prior won
+│   ├── plot_shift_vs_strength_scatter.py  shift vs strength of the fact, one point per row, per type
 │   └── tools/
 │       ├── make_nb_model.py           builds and runs a single-model notebook (both lens_analysis notebooks)
 │       └── make_nb_compare.py         builds and runs the comparison notebook
@@ -183,6 +184,8 @@ models, correlations within groups): [`results/comparison/findings.md`](results/
     │   ├── shift_all_rows_by_type.png          mean shift over all rows of each type, not split by outcome (analysis/plot_shift_by_type.py)
     │   ├── shift_by_type_strong_weak.png       the same for strong and weak facts separately (analysis/plot_shift_strong_weak.py)
     │   ├── shift_by_type_strong_weak_outcome.png  the same, also split by the outcome (analysis/plot_shift_strong_weak_outcome.py)
+    │   ├── shift_vs_strength_qwen3-1.7b.png    shift vs strength of the fact per type, Qwen3-1.7B (analysis/plot_shift_vs_strength_scatter.py)
+    │   ├── shift_vs_strength_qwen3-4b.png      the same for Qwen3-4B
     │   └── robustness/                         tables written by analysis/robustness.py
     └── smoke_tests/                   short test runs used to check the code and time the models;
         │                              all made with OLDER versions of run_flip.py (see below)
@@ -434,6 +437,17 @@ fewer than 5 rows in a panel are not drawn:
 python analysis/plot_shift_strong_weak_outcome.py   # --th, --min-rows
 ```
 It writes `results/comparison/shift_by_type_strong_weak_outcome.png`.
+
+**Shift vs strength of the fact, per row** (a few seconds, saved subsets only): one point per row,
+x = −δ0 (strength of the fact), y = δ − δ0 (shift caused by the assertion), one panel per type; the
+context wins exactly above the diagonal. The rows form two clouds (the assertion is either taken over
+completely or barely moves δ), and the types differ in the strength of the fact at which the rows
+switch from one cloud to the other:
+
+```bash
+python analysis/plot_shift_vs_strength_scatter.py
+```
+It writes `results/comparison/shift_vs_strength_qwen3-1.7b.png` and `shift_vs_strength_qwen3-4b.png`.
 
 **Tests.** Lightweight tests on dummy data (no model, no downloads):
 
