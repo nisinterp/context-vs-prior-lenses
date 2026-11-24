@@ -135,6 +135,7 @@ models, correlations within groups): [`results/comparison/findings.md`](results/
 │   ├── plot_ctx_vs_strength.py        % context won vs strength of the fact (δ0), per type, both models
 │   ├── plot_cmp3_delta0.py            cmp3 with δ0 (the question without the assertion) added
 │   ├── plot_shift_by_type.py          mean assertion shift over all rows, one line per type, both models
+│   ├── plot_shift_strong_weak.py      the same, split into strong and weak facts
 │   └── tools/
 │       ├── make_nb_model.py           builds and runs a single-model notebook (both lens_analysis notebooks)
 │       └── make_nb_compare.py         builds and runs the comparison notebook
@@ -179,6 +180,7 @@ models, correlations within groups): [`results/comparison/findings.md`](results/
     │   ├── fact338_by_type.png                 one fact (338), δ and δ0 per type, both models (analysis/plot_one_fact.py)
     │   ├── ctx_vs_strength.png                 % context won vs strength of the fact, per type (analysis/plot_ctx_vs_strength.py)
     │   ├── shift_all_rows_by_type.png          mean shift over all rows of each type, not split by outcome (analysis/plot_shift_by_type.py)
+    │   ├── shift_by_type_strong_weak.png       the same for strong and weak facts separately (analysis/plot_shift_strong_weak.py)
     │   └── robustness/                         tables written by analysis/robustness.py
     └── smoke_tests/                   short test runs used to check the code and time the models;
         │                              all made with OLDER versions of run_flip.py (see below)
@@ -412,6 +414,15 @@ by whether the shift beat δ0; without the split the types differ in height but 
 python analysis/plot_shift_by_type.py
 ```
 It writes `results/comparison/shift_all_rows_by_type.png`.
+
+**Shift per type, strong vs weak facts** (a few seconds, saved subsets only): the same figure for facts
+known by both models, split into strong facts (δ0 < −30 in both models, last layer, logit lens; 87
+facts) and the other, weaker facts (204):
+
+```bash
+python analysis/plot_shift_strong_weak.py          # --th sets the δ0 threshold
+```
+It writes `results/comparison/shift_by_type_strong_weak.png`.
 
 **Tests.** Lightweight tests on dummy data (no model, no downloads):
 
