@@ -136,6 +136,7 @@ models, correlations within groups): [`results/comparison/findings.md`](results/
 │   ├── plot_cmp3_delta0.py            cmp3 with δ0 (the question without the assertion) added
 │   ├── plot_shift_by_type.py          mean assertion shift over all rows, one line per type, both models
 │   ├── plot_shift_strong_weak.py      the same, split into strong and weak facts
+│   ├── plot_shift_strong_weak_outcome.py  the same, also split by context won / prior won
 │   └── tools/
 │       ├── make_nb_model.py           builds and runs a single-model notebook (both lens_analysis notebooks)
 │       └── make_nb_compare.py         builds and runs the comparison notebook
@@ -181,6 +182,7 @@ models, correlations within groups): [`results/comparison/findings.md`](results/
     │   ├── ctx_vs_strength.png                 % context won vs strength of the fact, per type (analysis/plot_ctx_vs_strength.py)
     │   ├── shift_all_rows_by_type.png          mean shift over all rows of each type, not split by outcome (analysis/plot_shift_by_type.py)
     │   ├── shift_by_type_strong_weak.png       the same for strong and weak facts separately (analysis/plot_shift_strong_weak.py)
+    │   ├── shift_by_type_strong_weak_outcome.png  the same, also split by the outcome (analysis/plot_shift_strong_weak_outcome.py)
     │   └── robustness/                         tables written by analysis/robustness.py
     └── smoke_tests/                   short test runs used to check the code and time the models;
         │                              all made with OLDER versions of run_flip.py (see below)
@@ -423,6 +425,15 @@ facts) and the other, weaker facts (204):
 python analysis/plot_shift_strong_weak.py          # --th sets the δ0 threshold
 ```
 It writes `results/comparison/shift_by_type_strong_weak.png`.
+
+**Shift per type, strong vs weak facts, by outcome** (a few seconds, saved subsets only): the same,
+each panel also split by the final answer with the assertion (context won / prior won). Types with
+fewer than 5 rows in a panel are not drawn:
+
+```bash
+python analysis/plot_shift_strong_weak_outcome.py   # --th, --min-rows
+```
+It writes `results/comparison/shift_by_type_strong_weak_outcome.png`.
 
 **Tests.** Lightweight tests on dummy data (no model, no downloads):
 
