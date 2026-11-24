@@ -134,6 +134,7 @@ models, correlations within groups): [`results/comparison/findings.md`](results/
 │   ├── plot_one_fact.py               J-lens curves of one fact per linguistic type, both models
 │   ├── plot_ctx_vs_strength.py        % context won vs strength of the fact (δ0), per type, both models
 │   ├── plot_cmp3_delta0.py            cmp3 with δ0 (the question without the assertion) added
+│   ├── plot_shift_by_type.py          mean assertion shift over all rows, one line per type, both models
 │   └── tools/
 │       ├── make_nb_model.py           builds and runs a single-model notebook (both lens_analysis notebooks)
 │       └── make_nb_compare.py         builds and runs the comparison notebook
@@ -177,6 +178,7 @@ models, correlations within groups): [`results/comparison/findings.md`](results/
     │   ├── comparison_by_category.csv          the table behind the figures
     │   ├── fact338_by_type.png                 one fact (338), δ and δ0 per type, both models (analysis/plot_one_fact.py)
     │   ├── ctx_vs_strength.png                 % context won vs strength of the fact, per type (analysis/plot_ctx_vs_strength.py)
+    │   ├── shift_all_rows_by_type.png          mean shift over all rows of each type, not split by outcome (analysis/plot_shift_by_type.py)
     │   └── robustness/                         tables written by analysis/robustness.py
     └── smoke_tests/                   short test runs used to check the code and time the models;
         │                              all made with OLDER versions of run_flip.py (see below)
@@ -400,6 +402,16 @@ It writes `results/comparison/ctx_vs_strength.png`.
 python analysis/plot_cmp3_delta0.py
 ```
 It writes `results/comparison/cmp3_with_delta0.png`.
+
+**Shift per type, all rows** (a few seconds, saved subsets only): the mean shift δ − δ0 over all rows
+of each linguistic type, not split by the outcome; one line per type, coloured by % context won.
+Split by the outcome (as in fig3) the curves of all types look alike, because each group is selected
+by whether the shift beat δ0; without the split the types differ in height but not in shape:
+
+```bash
+python analysis/plot_shift_by_type.py
+```
+It writes `results/comparison/shift_all_rows_by_type.png`.
 
 **Tests.** Lightweight tests on dummy data (no model, no downloads):
 
